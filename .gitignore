@@ -65,3 +65,23 @@ typings/
 
 # Serverless directories
 .serverless
+
+
+
+
+
+client/.DS_Store
+client/node_modules
+client/dist
+client/.env.local
+client/.env.*.local
+client/npm-debug.log*
+client/yarn-debug.log*
+client/yarn-error.log*
+client/.idea
+client/.vscode
+client/*.suo
+client/*.ntvs*
+client/*.njsproj
+client/*.sln
+client/*.sw*
