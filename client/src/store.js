@@ -12,7 +12,8 @@ export default new Vuex.Store({
   state: {
     posts: [],
     user: null,
-    loading: false
+    loading: false,
+    error: null
   },
   mutations: {
     setPosts: (state, payload) => {
@@ -23,7 +24,12 @@ export default new Vuex.Store({
     },
     setLoading: (state, payload) => {
       state.loading = payload;
-    }
+    },
+    setError: (state, payload) => {
+      state.error = payload;
+    },
+    clearUser: state => (state.user = null),
+    clearError: state => (state.error = null)
   },
   actions: {
     getCurrentUser: async ({ commit }) => {
@@ -60,8 +66,9 @@ export default new Vuex.Store({
       commit('setLoading', false);
     },
     signinUser: async function({ commit }, payload) {
-
+      commit('clearError');
       commit('setLoading', true);
+      localStorage.setItem('token', '');
       try {
         const apolloResult = await apolloClient
           .mutate({
@@ -74,11 +81,17 @@ export default new Vuex.Store({
           router.go();
         }
       } catch(err) {
-        console.error(err);
+        commit('setError', err);
+        //console.error(err);
       }
       commit('setLoading', false);
-    }
-
+    },
+    signoutUser: async function({ commit }) {
+      commit('clearUser');
+      localStorage.setItem('token', '');
+      await apolloClient.resetStore();
+      router.push('/');
+    },
     /*getPosts: async () => {
       apolloClient
         .query({
@@ -103,6 +116,7 @@ export default new Vuex.Store({
   getters: {
     posts: state => state.posts,
     loading: state => state.loading,
-    user: state => state.user
+    user: state => state.user,
+    error: state => state.error
   }
 })
