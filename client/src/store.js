@@ -1,22 +1,24 @@
-import Vue from 'vue';
-import Vuex from 'vuex';
-import router from './router';
+import Vue from "vue";
+import Vuex from "vuex";
+import router from "./router";
 
-import { defaultClient as apolloClient } from './main';
+import { defaultClient as apolloClient } from "./main";
 
 import {
   ADD_POST,
   GET_POSTS,
   GET_CURRENT_USER,
   SIGNIN_USER,
-  SIGNUP_USER
-} from './queries';
+  SIGNUP_USER,
+  SEARCH_POSTS
+} from "./queries";
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
     posts: [],
+    searchResults: [],
     user: null,
     loading: false,
     error: null,
@@ -26,6 +28,12 @@ export default new Vuex.Store({
     setPosts: (state, payload) => {
       state.posts = payload;
     },
+    setSearchResults: (state, payload) => {
+      if (payload !== null) {
+        state.searchResults = payload;
+      }
+    },
+    clearSearchResults: state => (state.searchResults = []),
     setUser: (state, payload) => {
       state.user = payload;
     },
@@ -43,35 +51,47 @@ export default new Vuex.Store({
   },
   actions: {
     getCurrentUser: async ({ commit }) => {
-      commit('setLoading', true);
+      commit("setLoading", true);
       try {
         const apolloResult = await apolloClient.query({
           query: GET_CURRENT_USER
         });
         const { data } = apolloResult;
         if (data) {
-          commit('setUser', data.getCurrentUser);
+          commit("setUser", data.getCurrentUser);
           console.log(data.getCurrentUser);
         }
       } catch (err) {
         console.error(err);
       }
-      commit('setLoading', false);
+      commit("setLoading", false);
     },
     getPosts: async function({ commit }) {
-      commit('setLoading', true);
+      commit("setLoading", true);
       try {
         const apolloResult = await apolloClient.query({
           query: GET_POSTS
         });
         const { data } = apolloResult;
         if (data) {
-          commit('setPosts', data.getPosts);
+          commit("setPosts", data.getPosts);
         }
       } catch (err) {
         console.error(err);
       }
-      commit('setLoading', false);
+      commit("setLoading", false);
+    },
+    searchPosts: ({ commit }, payload) => {
+      apolloClient
+        .query({
+          query: SEARCH_POSTS,
+          variables: payload
+        })
+        .then(({ data }) => {
+          //console.log(data.searchPosts);
+          commit("setSearchResults", data.searchPosts);
+        })
+        .catch(err => console.error(err));
     },
     addPost: async function({ commit }, payload) {
       try {
@@ -92,9 +112,9 @@ export default new Vuex.Store({
             });
           },
           optimisticResponse: {
-            __typename: 'Mutation',
+            __typename: "Mutation",
             addPost: {
-              __typename: 'Post',
+              __typename: "Post",
               _id: -1,
               ...payload
             }
@@ -109,9 +129,9 @@ export default new Vuex.Store({
       }
     },
     signinUser: async function({ commit }, payload) {
-      commit('clearError');
-      commit('setLoading', true);
-      localStorage.setItem('token', '');
+      commit("clearError");
+      commit("setLoading", true);
+      localStorage.setItem("token", "");
       try {
         const apolloResult = await apolloClient.mutate({
           mutation: SIGNIN_USER,
@@ -119,18 +139,18 @@ export default new Vuex.Store({
         });
         const { data } = apolloResult;
         if (data) {
-          localStorage.setItem('token', data.signinUser.token);
+          localStorage.setItem("token", data.signinUser.token);
           router.go();
         }
       } catch (err) {
-        commit('setError', err);
+        commit("setError", err);
         //console.error(err);
       }
-      commit('setLoading', false);
+      commit("setLoading", false);
     },
     signupUser: async function({ commit }, payload) {
-      commit('clearError');
-      commit('setLoading', true);
+      commit("clearError");
+      commit("setLoading", true);
       try {
         const apolloResult = await apolloClient.mutate({
           mutation: SIGNUP_USER,
@@ -138,20 +158,20 @@ export default new Vuex.Store({
         });
         const { data } = apolloResult;
         if (data) {
-          localStorage.setItem('token', data.signupUser.token);
+          localStorage.setItem("token", data.signupUser.token);
           router.go();
         }
       } catch (err) {
-        commit('setError', err);
+        commit("setError", err);
         //console.error(err);
       }
-      commit('setLoading', false);
+      commit("setLoading", false);
     },
     signoutUser: async function({ commit }) {
-      commit('clearUser');
-      localStorage.setItem('token', '');
+      commit("clearUser");
+      localStorage.setItem("token", "");
       await apolloClient.resetStore();
-      router.push('/');
+      router.push("/");
     }
     /*getPosts: async () => {
       apolloClient
@@ -176,6 +196,7 @@ export default new Vuex.Store({
   },
   getters: {
     posts: state => state.posts,
+    searchResults: state => state.searchResults,
     loading: state => state.loading,
     userFavorites: state => state.user && state.user.favorites,
     user: state => state.user,

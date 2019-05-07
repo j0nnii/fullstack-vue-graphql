@@ -64,6 +64,8 @@
 
       <v-spacer></v-spacer>
       <v-text-field
+        v-model="searchTerm"
+        @input="handleSearchPosts"
         flex
         prepend-icon="search"
         placeholder="Search posts"
@@ -71,7 +73,33 @@
         single-line
         hide-details
       ></v-text-field>
+
+      <v-card
+        dark
+        v-if="searchResults.length"
+        id="search__card"
+      >
+        <v-list>
+          <v-list-tile
+            @click="goToSearchResult(result._id)"
+            v-for="result in searchResults"
+            :key="result._id"
+          >
+            <v-list-tile-title>
+              {{result.title}}
+              <span class="font-weight-thin">{{formatDescription(result.description)}}</span>
+            </v-list-tile-title>
+
+            <v-list-tile-action v-if="checkIfUserFavorite(result._id)">
+              <v-icon>favorite</v-icon>
+            </v-list-tile-action>
+
+          </v-list-tile>
+        </v-list>
+      </v-card>
+
       <v-spacer></v-spacer>
+
       <v-toolbar-items class="hidden-xs-only">
         <v-btn
           flat
@@ -178,7 +206,8 @@ export default {
       badgeAnimated: false,
       sideNav: false,
       authSnackbar: false,
-      authErrorSnackbar: false
+      authErrorSnackbar: false,
+      searchTerm: ""
     };
   },
   watch: {
@@ -200,7 +229,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(["authError", "user", "userFavorites"]),
+    ...mapGetters(["authError", "user", "userFavorites", "searchResults"]),
 
     horizontalNavItems() {
       let items = [
@@ -230,11 +259,30 @@ export default {
     }
   },
   methods: {
+    checkIfUserFavorite(resultId) {
+      return (
+        this.userFavorites &&
+        this.userFavorites.some(fave => fave._id === resultId)
+      );
+    },
+    goToSearchResult(resultId) {
+      this.searchTerm = "";
+      this.$router.push(`/posts/${resultId}`);
+      this.$store.commit("clearSearchResults");
+    },
     toggleSideNav() {
       this.sideNav = !this.sideNav;
     },
     handleSignoutUser() {
       this.$store.dispatch("signoutUser");
+    },
+    formatDescription(desc) {
+      return desc.length > 30 ? `${desc.slice(0, 30)}...` : desc;
+    },
+    handleSearchPosts() {
+      this.$store.dispatch("searchPosts", {
+        searchTerm: this.searchTerm
+      });
     }
   }
 };
@@ -254,6 +302,14 @@ export default {
 .fade-enter,
 .fade-leave-active {
   opacity: 0;
+}
+
+#search__card {
+  position: "absolute";
+  width: 100vw;
+  z-index: 8;
+  top: 150px;
+  left: 0;
 }
 
 .bounce {
