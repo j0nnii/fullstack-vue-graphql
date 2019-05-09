@@ -1,8 +1,8 @@
-import Vue from "vue";
-import Vuex from "vuex";
-import router from "./router";
+import Vue from 'vue';
+import Vuex from 'vuex';
+import router from './router';
 
-import { defaultClient as apolloClient } from "./main";
+import { defaultClient as apolloClient } from './main';
 
 import {
   ADD_POST,
@@ -11,8 +11,11 @@ import {
   GET_CURRENT_USER,
   SIGNIN_USER,
   SIGNUP_USER,
-  SEARCH_POSTS
-} from "./queries";
+  SEARCH_POSTS,
+  UPDATE_USER_POST,
+  DELETE_USER_POST,
+  INFINITE_SCROLL_POSTS
+} from './queries';
 
 Vue.use(Vuex);
 
@@ -56,35 +59,35 @@ export default new Vuex.Store({
   },
   actions: {
     getCurrentUser: async ({ commit }) => {
-      commit("setLoading", true);
+      commit('setLoading', true);
       try {
         const apolloResult = await apolloClient.query({
           query: GET_CURRENT_USER
         });
         const { data } = apolloResult;
         if (data) {
-          commit("setUser", data.getCurrentUser);
+          commit('setUser', data.getCurrentUser);
           console.log(data.getCurrentUser);
         }
       } catch (err) {
         console.error(err);
       }
-      commit("setLoading", false);
+      commit('setLoading', false);
     },
     getPosts: async function({ commit }) {
-      commit("setLoading", true);
+      commit('setLoading', true);
       try {
         const apolloResult = await apolloClient.query({
           query: GET_POSTS
         });
         const { data } = apolloResult;
         if (data) {
-          commit("setPosts", data.getPosts);
+          commit('setPosts', data.getPosts);
         }
       } catch (err) {
         console.error(err);
       }
-      commit("setLoading", false);
+      commit('setLoading', false);
     },
     getUserPosts: ({ commit }, payload) => {
       apolloClient
@@ -93,7 +96,7 @@ export default new Vuex.Store({
           variables: payload
         })
         .then(({ data }) => {
-          commit("setUserPosts", data.getUserPosts);
+          commit('setUserPosts', data.getUserPosts);
           //console.log(data.getUserPosts);
         })
         .catch(err => {
@@ -108,7 +111,7 @@ export default new Vuex.Store({
         })
         .then(({ data }) => {
           //console.log(data.searchPosts);
-          commit("setSearchResults", data.searchPosts);
+          commit('setSearchResults', data.searchPosts);
         })
         .catch(err => console.error(err));
     },
@@ -131,13 +134,23 @@ export default new Vuex.Store({
             });
           },
           optimisticResponse: {
-            __typename: "Mutation",
+            __typename: 'Mutation',
             addPost: {
-              __typename: "Post",
+              __typename: 'Post',
               _id: -1,
               ...payload
             }
-          }
+          },
+          // rerun specified queries after performing mutation to get fresh data
+          refetchQueries: [
+            {
+              query: INFINITE_SCROLL_POSTS,
+              variables: {
+                pageNum: 1,
+                pageSize: 2
+              }
+            }
+          ]
         });
         const { data } = apolloResult;
         if (data) {
@@ -147,10 +160,51 @@ export default new Vuex.Store({
         console.error(err);
       }
     },
+    updateUserPost: ({ state, commit }, payload) => {
+      apolloClient
+        .mutate({
+          mutation: UPDATE_USER_POST,
+          variables: payload
+        })
+        .then(({ data }) => {
+          const index = state.userPosts.findIndex(
+            post => post._id === data.updateUserPost._id
+          );
+          const userPosts = [
+            ...state.userPosts.slice(0, index),
+            data.updateUserPost,
+            ...state.userPosts.slice(index + 1)
+          ];
+          commit('setUserPosts', userPosts);
+        })
+        .catch(err => {
+          console.error(err);
+        });
+    },
+    deleteUserPost: ({ state, commit }, payload) => {
+      apolloClient
+        .mutate({
+          mutation: DELETE_USER_POST,
+          variables: payload
+        })
+        .then(({ data }) => {
+          const index = state.userPosts.findIndex(
+            post => post._id === data.deleteUserPost._id
+          );
+          const userPosts = [
+            ...state.userPosts.slice(0, index),
+            ...state.userPosts.slice(index + 1)
+          ];
+          commit('setUserPosts', userPosts);
+        })
+        .catch(err => {
+          console.error(err);
+        });
+    },
     signinUser: async function({ commit }, payload) {
-      commit("clearError");
-      commit("setLoading", true);
-      localStorage.setItem("token", "");
+      commit('clearError');
+      commit('setLoading', true);
+      localStorage.setItem('token', '');
       try {
         const apolloResult = await apolloClient.mutate({
           mutation: SIGNIN_USER,
@@ -158,18 +212,18 @@ export default new Vuex.Store({
         });
         const { data } = apolloResult;
         if (data) {
-          localStorage.setItem("token", data.signinUser.token);
+          localStorage.setItem('token', data.signinUser.token);
           router.go();
         }
       } catch (err) {
-        commit("setError", err);
+        commit('setError', err);
         //console.error(err);
       }
-      commit("setLoading", false);
+      commit('setLoading', false);
     },
     signupUser: async function({ commit }, payload) {
-      commit("clearError");
-      commit("setLoading", true);
+      commit('clearError');
+      commit('setLoading', true);
       try {
         const apolloResult = await apolloClient.mutate({
           mutation: SIGNUP_USER,
@@ -177,20 +231,20 @@ export default new Vuex.Store({
         });
         const { data } = apolloResult;
         if (data) {
-          localStorage.setItem("token", data.signupUser.token);
+          localStorage.setItem('token', data.signupUser.token);
           router.go();
         }
       } catch (err) {
-        commit("setError", err);
+        commit('setError', err);
         //console.error(err);
       }
-      commit("setLoading", false);
+      commit('setLoading', false);
     },
     signoutUser: async function({ commit }) {
-      commit("clearUser");
-      localStorage.setItem("token", "");
+      commit('clearUser');
+      localStorage.setItem('token', '');
       await apolloClient.resetStore();
-      router.push("/");
+      router.push('/');
     }
     /*getPosts: async () => {
       apolloClient

@@ -1,4 +1,4 @@
-import { gql } from "apollo-boost";
+import { gql } from 'apollo-boost';
 
 /* post queries */
 export const GET_POSTS = gql`
@@ -136,8 +136,22 @@ export const ADD_POST = gql`
 `;
 
 export const UPDATE_USER_POST = gql`
-  mutation($postId: ID!, $userId: ID!, $title: String!, $imageUrl: String!, $categories: [String]!, $description: String!) {
-    updateUserPost(postId: $postId, userId: $userId, title: $title, imageUrl: $imageUrl, categories: $categories, description: $description) {
+  mutation(
+    $postId: ID!
+    $userId: ID!
+    $title: String!
+    $imageUrl: String!
+    $categories: [String]!
+    $description: String!
+  ) {
+    updateUserPost(
+      postId: $postId
+      userId: $userId
+      title: $title
+      imageUrl: $imageUrl
+      categories: $categories
+      description: $description
+    ) {
       _id
       title
       imageUrl
@@ -152,6 +166,15 @@ export const UPDATE_USER_POST = gql`
     }
   }
 `;
+
+export const DELETE_USER_POST = gql`
+  mutation($postId: ID!) {
+    deleteUserPost(postId: $postId) {
+      _id
+    }
+  }
+`;
+
 export const ADD_POST_MESSAGE = gql`
   mutation($messageBody: String!, $userId: ID!, $postId: ID!) {
     addPostMessage(

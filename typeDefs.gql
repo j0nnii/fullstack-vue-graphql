@@ -40,6 +40,7 @@ type Mutation {
     description: String!
     creatorId: ID!
   ): Post!
+  deleteUserPost(postId: ID!): Post!
   addPostMessage(messageBody: String!, userId: ID!, postId: ID!): Message!
   updateUserPost(
     postId: ID!

@@ -289,6 +289,16 @@ export default {
 </script>
 
 <style>
+h1 {
+  font-weight: 400;
+  font-size: 2, 5rem;
+}
+
+h2 {
+  font-weight: 400;
+  font-size: 2rem;
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition-property: opacity;
@@ -308,8 +318,8 @@ export default {
   position: "absolute";
   width: 100vw;
   z-index: 8;
-  top: 150px;
-  left: 0;
+  top: 100%;
+  left: 0%;
 }
 
 .bounce {

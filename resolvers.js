@@ -1,5 +1,5 @@
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const createToken = (user, secret, expiresIn) => {
   const { username, email } = user;
@@ -15,17 +15,17 @@ module.exports = {
       const user = await User.findOne({
         username: currentUser.username
       }).populate({
-        path: "favorites",
-        model: "Post"
+        path: 'favorites',
+        model: 'Post'
       });
       return user;
     },
     getPosts: async (_, args, { Post }) => {
       const posts = await Post.find({})
-        .sort({ createdDate: "desc" })
+        .sort({ createdDate: 'desc' })
         .populate({
-          path: "createdBy",
-          model: "User"
+          path: 'createdBy',
+          model: 'User'
         });
       return posts;
     },
@@ -37,8 +37,8 @@ module.exports = {
     },
     getPost: async (_, { postId }, { Post }) => {
       const post = await Post.findOne({ _id: postId }).populate({
-        path: "messages.messageUser",
-        model: "User"
+        path: 'messages.messageUser',
+        model: 'User'
       });
       return post;
     },
@@ -48,12 +48,12 @@ module.exports = {
           // Perform text search for search value of searchTerm
           { $text: { $search: searchTerm } },
           // Assign 'searchTerm' a text score to provide best match
-          { score: { $meta: "textScore" } }
+          { score: { $meta: 'textScore' } }
           // sort results according to that textScore
         )
           .sort({
-            score: { $meta: "textScore" },
-            likes: "desc"
+            score: { $meta: 'textScore' },
+            likes: 'desc'
           })
           .limit(5);
         return searchResults;
@@ -63,19 +63,19 @@ module.exports = {
       let posts;
       if (pageNum === 1) {
         posts = await Post.find({})
-          .sort({ createdDate: "desc" })
+          .sort({ createdDate: 'desc' })
           .populate({
-            path: "createdBy",
-            model: "User"
+            path: 'createdBy',
+            model: 'User'
           })
           .limit(pageSize);
       } else {
         const skips = pageSize * (pageNum - 1);
         posts = await Post.find({})
-          .sort({ createdDate: "desc" })
+          .sort({ createdDate: 'desc' })
           .populate({
-            path: "createdBy",
-            model: "User"
+            path: 'createdBy',
+            model: 'User'
           })
           .skip(skips)
           .limit(pageSize);
@@ -100,12 +100,20 @@ module.exports = {
       }).save();
       return newPost;
     },
-    updateUserPost: async (_, { postId, userId, title, imageUrl, categories, description, creatorId }, { Post }) => {
+    updateUserPost: async (
+      _,
+      { postId, userId, title, imageUrl, categories, description, creatorId },
+      { Post }
+    ) => {
       const post = await Post.findOneAndUpdate(
-        { _id: postId, createdBy: userId},
+        { _id: postId, createdBy: userId },
         { $set: { title, imageUrl, categories, description } },
         { new: true }
       );
+      return post;
+    },
+    deleteUserPost: async (_, { postId }, { Post }) => {
+      const post = await Post.findOneAndRemove({ _id: postId });
       return post;
     },
     addPostMessage: async (_, { messageBody, userId, postId }, { Post }) => {
@@ -118,8 +126,8 @@ module.exports = {
         { $push: { messages: { $each: [newMessage], $position: 0 } } },
         { new: true }
       ).populate({
-        path: "messages.messageUser",
-        model: "User"
+        path: 'messages.messageUser',
+        model: 'User'
       });
       return post.messages[0];
     },
@@ -134,8 +142,8 @@ module.exports = {
         { $addToSet: { favorites: postId } },
         { new: true }
       ).populate({
-        path: "favorites",
-        model: "Post"
+        path: 'favorites',
+        model: 'Post'
       });
       return { likes: post.likes, favorites: user.favorites };
     },
@@ -150,33 +158,33 @@ module.exports = {
         { $pull: { favorites: postId } },
         { new: true }
       ).populate({
-        path: "favorites",
-        model: "Post"
+        path: 'favorites',
+        model: 'Post'
       });
       return { likes: post.likes, favorites: user.favorites };
     },
     signinUser: async (_, { username, password }, { User }) => {
       const user = await User.findOne({ username });
       if (!user) {
-        throw new Error("User not found");
+        throw new Error('User not found');
       }
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
-        throw new Error("Invalid password");
+        throw new Error('Invalid password');
       }
-      return { token: createToken(user, process.env.SECRET, "1hr") };
+      return { token: createToken(user, process.env.SECRET, '1hr') };
     },
     signupUser: async (_, { username, email, password }, { User }) => {
       const user = await User.findOne({ username });
       if (user) {
-        throw new Error("User already exists");
+        throw new Error('User already exists');
       }
       const newUser = await new User({
         username,
         email,
         password
       }).save();
-      return { token: createToken(newUser, process.env.SECRET, "1hr") };
+      return { token: createToken(newUser, process.env.SECRET, '1hr') };
     }
   }
 };

@@ -21,7 +21,7 @@
             <v-card-title primary-title>
               <div>
                 <div class="headline">{{user.username}}</div>
-                <div>Joined {{user.joinDate}}</div>
+                <div>Joined {{formatJoinDate(user.joinDate)}}</div>
                 <div class="hidden-xs-only font-weight-thin">{{user.favorites.length}} Favorites</div>
                 <div class="hidden-xs-only font-weight-thin">{{userPosts.length}} Posts Added</div>
               </div>
@@ -66,6 +66,7 @@
             hover
           >
             <v-card-media
+              @click="goToPost(favorite._id)"
               height="30vh"
               :src="favorite.imageUrl"
             ></v-card-media>
@@ -113,7 +114,7 @@
               fab
               small
               dark
-              @click="editPostDialog = true"
+              @click="loadPost(post)"
             >
               <v-icon>edit</v-icon>
             </v-btn>
@@ -123,11 +124,13 @@
               fab
               small
               dark
+              @click="handleDeleteUserPost(post)"
             >
               <v-icon>delete</v-icon>
             </v-btn>
 
             <v-card-media
+              @click="goToPost(post._id)"
               height="30vh"
               :src="post.imageUrl"
             ></v-card-media>
@@ -228,6 +231,7 @@
                 type="submit"
                 class="success-text"
                 flat
+                :disabled="!isFormValid"
               >Update</v-btn>
               <v-btn
                 class="error--text"
@@ -245,6 +249,7 @@
 </template>
 
 <script>
+import moment from "moment";
 import { mapGetters } from "vuex";
 export default {
   name: "Profile",
@@ -280,12 +285,52 @@ export default {
     this.handleGetUserPosts();
   },
   methods: {
+    goToPost(id) {
+      this.$router.push(`/posts/${id}`);
+    },
+    formatJoinDate(date) {
+      return moment(new Date(date)).format("ll");
+    },
     handleGetUserPosts() {
       this.$store.dispatch("getUserPosts", {
         userId: this.user._id
       });
     },
-    handleUpdateUserPost() {}
+    handleUpdateUserPost() {
+      if (this.$refs.form.validate()) {
+        this.$store.dispatch("updateUserPost", {
+          postId: this.postId,
+          userId: this.user._id,
+          title: this.title,
+          imageUrl: this.imageUrl,
+          categories: this.categories,
+          description: this.description
+        });
+        this.editPostDialog = false;
+      }
+    },
+    handleDeleteUserPost(post) {
+      this.loadPost(post, false);
+      const deletePost = window.confirm(
+        "Are you sure you want to delete this post"
+      );
+      if (deletePost) {
+        this.$store.dispatch("deleteUserPost", {
+          postId: this.postId
+        });
+      }
+    },
+    loadPost(
+      { _id, title, imageUrl, categories, description },
+      editPostDialog = true
+    ) {
+      this.editPostDialog = editPostDialog;
+      this.postId = _id;
+      this.title = title;
+      this.imageUrl = imageUrl;
+      this.categories = categories;
+      this.description = description;
+    }
   }
 };
 </script>
