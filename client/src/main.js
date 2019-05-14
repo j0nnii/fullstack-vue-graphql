@@ -1,8 +1,8 @@
-import Vue from 'vue'
-import './plugins/vuetify'
-import App from './App.vue'
-import router from './router'
-import store from './store'
+import Vue from 'vue';
+import './plugins/vuetify';
+import App from './App.vue';
+import router from './router';
+import store from './store';
 
 import ApolloClient from 'apollo-boost';
 import VueApollo from 'vue-apollo';
@@ -13,12 +13,13 @@ Vue.component('form-alert', FormAlert);
 Vue.use(VueApollo);
 
 export const defaultClient = new ApolloClient({
-  uri: "http://localhost:4000/graphql",
+  //uri: "http://localhost:4000/graphql",
+  uri: 'https://fullstack-vue-graphql.herokuapp.com//graphql',
   fetchOptions: {
     credentials: 'include'
   },
   request: operation => {
-    if(!localStorage.token) {
+    if (!localStorage.token) {
       localStorage.setItem('token', '');
     }
 
@@ -27,7 +28,7 @@ export const defaultClient = new ApolloClient({
       headers: {
         authorization: localStorage.getItem('token')
       }
-    })
+    });
   },
   onError: ({ graphQLErrors, networkError }) => {
     if (networkError) {
@@ -36,7 +37,7 @@ export const defaultClient = new ApolloClient({
     if (graphQLErrors) {
       for (let err of graphQLErrors) {
         console.dir(err);
-        if (err.name === "AuthenticationError") {
+        if (err.name === 'AuthenticationError') {
           console.log('tried to submit application error');
           store.commit('setAuthError', err);
           store.dispatch('signoutUser');
@@ -48,7 +49,7 @@ export const defaultClient = new ApolloClient({
 
 const apolloProvider = new VueApollo({ defaultClient });
 
-Vue.config.productionTip = false
+Vue.config.productionTip = false;
 
 new Vue({
   provide: apolloProvider.provide(),
@@ -59,4 +60,4 @@ new Vue({
     // get current user info
     this.$store.dispatch('getCurrentUser');
   }
-}).$mount('#app')
+}).$mount('#app');

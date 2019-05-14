@@ -38,7 +38,7 @@
 
         <v-list-tile
           v-if="user"
-          @onclick="handleSignoutUser"
+          @click="handleSignoutUser"
         >
           <v-list-tile-action>
             <v-icon>exit_to_app</v-icon>
