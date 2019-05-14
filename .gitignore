@@ -85,3 +85,6 @@ client/*.ntvs*
 client/*.njsproj
 client/*.sln
 client/*.sw*
+
+yarn.lock
+package-lock.json
